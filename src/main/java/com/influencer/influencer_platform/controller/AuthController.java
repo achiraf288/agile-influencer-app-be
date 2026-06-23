@@ -6,6 +6,7 @@ import com.influencer.influencer_platform.dto.response.AuthResponse;
 import com.influencer.influencer_platform.dto.response.ProfileResponse;
 import com.influencer.influencer_platform.service.AuthService;
 import com.influencer.influencer_platform.service.ProfileService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,15 +22,47 @@ public class AuthController {
     private final ProfileService profileService;
 
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        AuthResponse response = authService.register(request);
-        return ResponseEntity.status(201).body(response);
+    public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletResponse response) {
+        AuthResponse authResponse = authService.register(request);
+        
+        // Set HttpOnly cookie with JWT token
+        response.addHeader("Set-Cookie", String.format(
+                "jwt=%s; HttpOnly; SameSite=None; Path=/; Max-Age=86400; Secure",
+                authResponse.getToken()
+        ));
+        
+        AuthResponse responseWithoutToken = AuthResponse.builder()
+                .role(authResponse.getRole())
+                .email(authResponse.getEmail())
+                .userId(authResponse.getUserId())
+                .build();
+        
+        return ResponseEntity.status(201).body(responseWithoutToken);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        AuthResponse response = authService.login(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
+        AuthResponse authResponse = authService.login(request);
+        
+        // Set HttpOnly cookie with JWT token
+        response.addHeader("Set-Cookie", String.format(
+                "jwt=%s; HttpOnly; SameSite=None; Path=/; Max-Age=86400; Secure",
+                authResponse.getToken()
+        ));
+        
+        AuthResponse responseWithoutToken = AuthResponse.builder()
+                .role(authResponse.getRole())
+                .email(authResponse.getEmail())
+                .userId(authResponse.getUserId())
+                .build();
+        
+        return ResponseEntity.ok(responseWithoutToken);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        response.addHeader("Set-Cookie", "jwt=; HttpOnly; SameSite=None; Path=/; Max-Age=0; Secure");
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/me")

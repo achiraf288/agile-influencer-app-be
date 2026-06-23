@@ -6,10 +6,13 @@ import com.influencer.influencer_platform.enums.UserRole;
 import com.influencer.influencer_platform.repository.InfluencerProfileRepository;
 import com.influencer.influencer_platform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Locale;
 
 @Configuration
 @RequiredArgsConstructor
@@ -19,17 +22,26 @@ public class DataInitializer implements CommandLineRunner {
     private final InfluencerProfileRepository influencerProfileRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Value("${default.user.email:}")
+    private String defaultUserEmail;
+
+    @Value("${default.user.password:}")
+    private String defaultUserPassword;
+
     @Override
     @Transactional
     public void run(String... args) {
-        String email = "User123@gmail.com";
-        String password = "123456";
-        User user = userRepository.findByEmail(email).orElse(null);
+        if (defaultUserEmail == null || defaultUserEmail.isBlank() || defaultUserPassword == null || defaultUserPassword.isBlank()) {
+            return;
+        }
+
+        defaultUserEmail = defaultUserEmail.toLowerCase(Locale.ROOT);
+        User user = userRepository.findByEmailIgnoreCase(defaultUserEmail).orElse(null);
 
         if (user == null) {
             user = User.builder()
-                    .email(email)
-                    .passwordHash(passwordEncoder.encode(password))
+                    .email(defaultUserEmail)
+                    .passwordHash(passwordEncoder.encode(defaultUserPassword))
                     .role(UserRole.INFLUENCER)
                     .fullName("Default Influencer")
                     .phone("")
@@ -43,7 +55,7 @@ public class DataInitializer implements CommandLineRunner {
                     .location("Unknown")
                     .build());
         } else {
-            user.setPasswordHash(passwordEncoder.encode(password));
+            user.setPasswordHash(passwordEncoder.encode(defaultUserPassword));
             if (user.getRole() == null) {
                 user.setRole(UserRole.INFLUENCER);
             }
