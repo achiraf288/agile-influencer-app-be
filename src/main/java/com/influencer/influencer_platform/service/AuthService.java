@@ -1,4 +1,5 @@
 package com.influencer.influencer_platform.service;
+//editorconfig: set filetype=java
 
 import com.influencer.influencer_platform.dto.request.LoginRequest;
 import com.influencer.influencer_platform.dto.request.RegisterRequest;

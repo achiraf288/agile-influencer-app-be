@@ -1,5 +1,5 @@
 package com.influencer.influencer_platform.entity;
-
+////editorconfig: set filetype=java
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
