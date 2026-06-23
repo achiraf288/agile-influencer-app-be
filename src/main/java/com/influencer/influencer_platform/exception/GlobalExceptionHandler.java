@@ -1,4 +1,3 @@
-//editorconfig: set filetype=java
 package com.influencer.influencer_platform.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;

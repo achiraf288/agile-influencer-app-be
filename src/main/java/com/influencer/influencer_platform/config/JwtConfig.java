@@ -1,4 +1,3 @@
-//editorconfig: set filetype=java
 package com.influencer.influencer_platform.config;
 
 import org.springframework.beans.factory.annotation.Value;

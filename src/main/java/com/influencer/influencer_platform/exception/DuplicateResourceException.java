@@ -1,4 +1,3 @@
-//editorconfig: set filetype=java
 package com.influencer.influencer_platform.exception;
 
 public class DuplicateResourceException extends RuntimeException {

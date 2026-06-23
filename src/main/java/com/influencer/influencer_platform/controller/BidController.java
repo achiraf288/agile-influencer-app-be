@@ -1,6 +1,4 @@
 package com.influencer.influencer_platform.controller;
-//editorconfig: set filetype=java
-
 import com.influencer.influencer_platform.dto.request.BidRequest;
 import com.influencer.influencer_platform.dto.response.BidResponse;
 import com.influencer.influencer_platform.service.BidService;
