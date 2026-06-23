@@ -1,5 +1,6 @@
 package com.influencer.influencer_platform.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
@@ -12,11 +13,16 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
+    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    private String allowedOriginsProp;
+
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        // Read allowed origins from property (comma-separated)
+        List<String> origins = Arrays.asList(allowedOriginsProp.split(","));
+        config.setAllowedOrigins(origins);
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setMaxAge(3600L);

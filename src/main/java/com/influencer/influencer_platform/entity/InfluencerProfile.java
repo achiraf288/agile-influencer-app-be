@@ -41,5 +41,6 @@ public class InfluencerProfile {
     
     @OneToMany(mappedBy = "influencerProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    private List<SocialMediaLink> socialMediaLinks;
+    @Builder.Default
+    private List<SocialMediaLink> socialMediaLinks = new java.util.ArrayList<>();
 }

@@ -7,13 +7,14 @@ import com.influencer.influencer_platform.entity.BrandProfile;
 import com.influencer.influencer_platform.entity.InfluencerProfile;
 import com.influencer.influencer_platform.entity.User;
 import com.influencer.influencer_platform.enums.UserRole;
-import com.influencer.influencer_platform.exception.DuplicateBidException;
+import com.influencer.influencer_platform.exception.DuplicateResourceException;
 import com.influencer.influencer_platform.repository.BrandProfileRepository;
 import com.influencer.influencer_platform.repository.InfluencerProfileRepository;
 import com.influencer.influencer_platform.repository.UserRepository;
 import com.influencer.influencer_platform.security.JwtTokenProvider;
 import com.influencer.influencer_platform.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -36,9 +37,9 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        String email = request.getEmail().toLowerCase(Locale.ROOT);
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
         if (userRepository.existsByEmailIgnoreCase(email)) {
-            throw new DuplicateBidException("Email already registered");
+            throw new DuplicateResourceException("Email already registered");
         }
 
         UserRole role = UserRole.valueOf(request.getRole().toUpperCase());
@@ -51,7 +52,11 @@ public class AuthService {
                 .phone(request.getPhone())
                 .build();
 
-        user = userRepository.save(user);
+        try {
+            user = userRepository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException("Email already registered");
+        }
 
         if (role == UserRole.BRAND) {
             BrandProfile brandProfile = BrandProfile.builder()
