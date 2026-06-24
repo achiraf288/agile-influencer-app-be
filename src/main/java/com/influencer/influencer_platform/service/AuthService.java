@@ -7,19 +7,22 @@ import com.influencer.influencer_platform.entity.BrandProfile;
 import com.influencer.influencer_platform.entity.InfluencerProfile;
 import com.influencer.influencer_platform.entity.User;
 import com.influencer.influencer_platform.enums.UserRole;
-import com.influencer.influencer_platform.exception.DuplicateBidException;
+import com.influencer.influencer_platform.exception.DuplicateResourceException;
 import com.influencer.influencer_platform.repository.BrandProfileRepository;
 import com.influencer.influencer_platform.repository.InfluencerProfileRepository;
 import com.influencer.influencer_platform.repository.UserRepository;
 import com.influencer.influencer_platform.security.JwtTokenProvider;
 import com.influencer.influencer_platform.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -34,21 +37,26 @@ public class AuthService {
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateBidException("Email already registered");
+        String email = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        if (userRepository.existsByEmailIgnoreCase(email)) {
+            throw new DuplicateResourceException("Email already registered");
         }
 
         UserRole role = UserRole.valueOf(request.getRole().toUpperCase());
 
         User user = User.builder()
-                .email(request.getEmail())
+                .email(email)
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role(role)
                 .fullName(request.getFullName())
                 .phone(request.getPhone())
                 .build();
 
-        user = userRepository.save(user);
+        try {
+            user = userRepository.save(user);
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateResourceException("Email already registered");
+        }
 
         if (role == UserRole.BRAND) {
             BrandProfile brandProfile = BrandProfile.builder()
@@ -82,9 +90,10 @@ public class AuthService {
     }
 
     public AuthResponse login(LoginRequest request) {
+        String email = request.getEmail().toLowerCase(Locale.ROOT);
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
+                        email,
                         request.getPassword()
                 )
         );
