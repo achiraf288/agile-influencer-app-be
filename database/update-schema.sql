@@ -1,17 +1,16 @@
-CREATE DATABASE IF NOT EXISTS influencer_db
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
-
-CREATE USER IF NOT EXISTS 'influencer_user'@'localhost' IDENTIFIED BY 'influencer_password';
-GRANT ALL PRIVILEGES ON influencer_db.* TO 'influencer_user'@'localhost';
-FLUSH PRIVILEGES;
-
 USE influencer_db;
 
--- Campaigns Table
-CREATE TABLE IF NOT EXISTS campaigns (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    brand_id INT NOT NULL,
+-- Disable foreign key checks
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- Drop existing tables (order matters due to foreign keys)
+DROP TABLE IF EXISTS bids;
+DROP TABLE IF EXISTS campaigns;
+
+-- Recreate tables with correct schema
+CREATE TABLE campaigns (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    brand_id BIGINT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     category VARCHAR(100) NOT NULL,
@@ -24,11 +23,10 @@ CREATE TABLE IF NOT EXISTS campaigns (
     FOREIGN KEY (brand_id) REFERENCES brand_profiles(id) ON DELETE CASCADE
 );
 
--- Bids Table
-CREATE TABLE IF NOT EXISTS bids (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    campaign_id INT NOT NULL,
-    influencer_id INT NOT NULL,
+CREATE TABLE bids (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    campaign_id BIGINT NOT NULL,
+    influencer_id BIGINT NOT NULL,
     proposed_budget DECIMAL(10, 2) NOT NULL,
     message TEXT,
     status ENUM('PENDING', 'ACCEPTED', 'REJECTED', 'WITHDRAWN') DEFAULT 'PENDING',
@@ -39,4 +37,5 @@ CREATE TABLE IF NOT EXISTS bids (
     UNIQUE KEY unique_bid (campaign_id, influencer_id)
 );
 
--- Add INSERT statements here if you want starter data.
+-- Re-enable foreign key checks
+SET FOREIGN_KEY_CHECKS = 1;

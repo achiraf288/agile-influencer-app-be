@@ -11,14 +11,10 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BrandProfileDto {
+public class RecentActivityDto {
     private Long id;
-    private String companyName;
-    private String industry;
-    private String website;
-    private String bio;
-    private String logoUrl;
-    private Boolean isVerified;
+    private String type; // "bid", "campaign", "assignment"
+    private String description;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String status;
 }

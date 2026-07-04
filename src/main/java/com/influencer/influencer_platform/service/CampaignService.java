@@ -28,7 +28,7 @@ public class CampaignService {
     public CampaignResponse createCampaign(CampaignRequest request, Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         
-        BrandProfile brandProfile = brandProfileRepository.findByUserId(userId)
+        BrandProfile brandProfile = brandProfileRepository.findByUserIdWithUser(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand profile not found"));
 
         Campaign campaign = Campaign.builder()
@@ -39,16 +39,16 @@ public class CampaignService {
                 .location(request.getLocation())
                 .budget(request.getBudget())
                 .deadline(request.getDeadline())
-                .status(CampaignStatus.OPEN)
+                .status(CampaignStatus.ACTIVE)
                 .build();
 
         campaign = campaignRepository.save(campaign);
 
-        return mapToResponse(campaign);
+        return mapToResponse(campaign, brandProfile);
     }
 
     public List<CampaignResponse> getOpenCampaigns(String category, String location) {
-        Specification<Campaign> spec = (root, query, cb) -> cb.equal(root.get("status"), CampaignStatus.OPEN);
+        Specification<Campaign> spec = (root, query, cb) -> cb.equal(root.get("status"), CampaignStatus.ACTIVE);
         
         if (category != null && !category.isEmpty()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("category"), category));
@@ -66,16 +66,16 @@ public class CampaignService {
     public List<CampaignResponse> getMyCampaigns(Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         
-        BrandProfile brandProfile = brandProfileRepository.findByUserId(userId)
+        BrandProfile brandProfile = brandProfileRepository.findByUserIdWithUser(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand profile not found"));
 
-        return campaignRepository.findByBrandProfileId(brandProfile.getId()).stream()
+        return campaignRepository.findByBrandProfileIdWithBrandProfile(brandProfile.getId()).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
 
     public CampaignResponse getCampaignById(Long id) {
-        Campaign campaign = campaignRepository.findById(id)
+        Campaign campaign = campaignRepository.findByIdWithBrandProfile(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
         return mapToResponse(campaign);
     }
@@ -84,7 +84,7 @@ public class CampaignService {
     public CampaignResponse updateCampaignStatus(Long id, CampaignStatus status, Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         
-        Campaign campaign = campaignRepository.findById(id)
+        Campaign campaign = campaignRepository.findByIdWithBrandProfile(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
 
         if (!campaign.getBrandProfile().getUser().getId().equals(userId)) {
@@ -95,6 +95,59 @@ public class CampaignService {
         campaign = campaignRepository.save(campaign);
 
         return mapToResponse(campaign);
+    }
+
+    @Transactional
+    public CampaignResponse updateCampaign(Long id, CampaignRequest request, Authentication authentication) {
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
+        
+        Campaign campaign = campaignRepository.findByIdWithBrandProfile(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
+
+        if (!campaign.getBrandProfile().getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to update this campaign");
+        }
+
+        campaign.setTitle(request.getTitle());
+        campaign.setDescription(request.getDescription());
+        campaign.setCategory(request.getCategory());
+        campaign.setLocation(request.getLocation());
+        campaign.setBudget(request.getBudget());
+        campaign.setDeadline(request.getDeadline());
+
+        campaign = campaignRepository.save(campaign);
+
+        return mapToResponse(campaign);
+    }
+
+    @Transactional
+    public void deleteCampaign(Long id, Authentication authentication) {
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
+        
+        Campaign campaign = campaignRepository.findByIdWithBrandProfile(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));
+
+        if (!campaign.getBrandProfile().getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to delete this campaign");
+        }
+
+        campaignRepository.delete(campaign);
+    }
+
+    private CampaignResponse mapToResponse(Campaign campaign, BrandProfile brandProfile) {
+        return CampaignResponse.builder()
+                .id(campaign.getId())
+                .title(campaign.getTitle())
+                .description(campaign.getDescription())
+                .category(campaign.getCategory())
+                .location(campaign.getLocation())
+                .budget(campaign.getBudget())
+                .deadline(campaign.getDeadline())
+                .status(campaign.getStatus())
+                .createdAt(campaign.getCreatedAt())
+                .brandProfileId(brandProfile.getId())
+                .companyName(brandProfile.getCompanyName())
+                .build();
     }
 
     private CampaignResponse mapToResponse(Campaign campaign) {

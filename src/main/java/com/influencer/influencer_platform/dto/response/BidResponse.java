@@ -6,7 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
@@ -15,10 +14,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class BidResponse {
     private Long id;
-    private String proposal;
-    private BigDecimal proposedAmount;
+    private String message;
+    private Double proposedBudget;
     private BidStatus status;
-    private LocalDateTime submittedAt;
+    private LocalDateTime createdAt;
     private InfluencerSummaryDto influencer;
     private CampaignSummaryDto campaign;
 }

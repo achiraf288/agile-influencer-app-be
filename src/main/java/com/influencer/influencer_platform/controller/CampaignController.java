@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.List;
 
 @RestController
@@ -21,9 +22,12 @@ public class CampaignController {
 
     @PostMapping
     @PreAuthorize("hasRole('BRAND')")
-    public ResponseEntity<CampaignResponse> createCampaign(@Valid @RequestBody CampaignRequest request, Authentication authentication) {
+    public ResponseEntity<Map<String, Object>> createCampaign(@Valid @RequestBody CampaignRequest request, Authentication authentication) {
         CampaignResponse response = campaignService.createCampaign(request, authentication);
-        return ResponseEntity.status(201).body(response);
+        return ResponseEntity.status(201).body(Map.of(
+                "message", "Campaign created successfully",
+                "campaign", response
+        ));
     }
 
     @GetMapping
@@ -55,5 +59,25 @@ public class CampaignController {
             Authentication authentication) {
         CampaignResponse response = campaignService.updateCampaignStatus(id, status, authentication);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('BRAND')")
+    public ResponseEntity<Map<String, Object>> updateCampaign(
+            @PathVariable Long id,
+            @Valid @RequestBody CampaignRequest request,
+            Authentication authentication) {
+        CampaignResponse response = campaignService.updateCampaign(id, request, authentication);
+        return ResponseEntity.ok(Map.of(
+                "message", "Campaign updated successfully",
+                "campaign", response
+        ));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('BRAND')")
+    public ResponseEntity<Map<String, String>> deleteCampaign(@PathVariable Long id, Authentication authentication) {
+        campaignService.deleteCampaign(id, authentication);
+        return ResponseEntity.ok(Map.of("message", "Campaign deleted successfully"));
     }
 }

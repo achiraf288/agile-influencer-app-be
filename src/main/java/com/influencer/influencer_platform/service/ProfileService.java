@@ -95,6 +95,36 @@ public class ProfileService {
     }
 
     @Transactional
+    public BrandProfileDto updateBrandProfile(BrandProfileDto request, MultipartFile logo, Authentication authentication) {
+        Long userId = getAuthenticatedUserId(authentication);
+        
+        BrandProfile brandProfile = brandProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand profile not found"));
+
+        // Only update fields that are provided in the request
+        if (request.getCompanyName() != null) {
+            brandProfile.setCompanyName(request.getCompanyName());
+        }
+        if (request.getIndustry() != null) {
+            brandProfile.setIndustry(request.getIndustry());
+        }
+        if (request.getWebsite() != null) {
+            brandProfile.setWebsite(request.getWebsite());
+        }
+        if (request.getBio() != null) {
+            brandProfile.setBio(request.getBio());
+        }
+
+        if (logo != null && !logo.isEmpty()) {
+            brandProfile.setLogoUrl(fileStorageService.store(logo, "brands", userId));
+        }
+
+        brandProfile = brandProfileRepository.save(brandProfile);
+
+        return mapToBrandProfileDto(brandProfile);
+    }
+
+    @Transactional
     public InfluencerProfileDto updateInfluencerProfile(InfluencerProfileDto request, Authentication authentication) {
         Long userId = getAuthenticatedUserId(authentication);
         
@@ -288,6 +318,9 @@ public class ProfileService {
                 .website(profile.getWebsite())
                 .bio(profile.getBio())
                 .logoUrl(profile.getLogoUrl())
+                .isVerified(profile.getIsVerified())
+                .createdAt(profile.getCreatedAt())
+                .updatedAt(profile.getUpdatedAt())
                 .build();
     }
 

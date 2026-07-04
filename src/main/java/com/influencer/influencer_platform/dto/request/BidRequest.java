@@ -8,8 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 @Data
 @Builder
 @NoArgsConstructor
@@ -19,10 +17,10 @@ public class BidRequest {
     @NotNull(message = "Campaign ID is required")
     private Long campaignId;
     
-    @NotBlank(message = "Proposal is required")
-    @Size(min = 50, message = "Proposal must be at least 50 characters")
-    private String proposal;
+    @NotBlank(message = "Message is required")
+    @Size(min = 50, message = "Message must be at least 50 characters")
+    private String message;
     
-    @NotNull(message = "Proposed amount is required")
-    private BigDecimal proposedAmount;
+    @NotNull(message = "Proposed budget is required")
+    private Double proposedBudget;
 }

@@ -23,7 +23,7 @@ public class BidService {
 
     private final BidRepository bidRepository;
     private final CampaignRepository campaignRepository;
-    private final InfluencerProfileRepository influencerProfileRepository;
+    private final UserRepository userRepository;
     private final CampaignAssignmentRepository campaignAssignmentRepository;
     private final NotificationService notificationService;
 
@@ -31,25 +31,25 @@ public class BidService {
     public BidResponse createBid(BidRequest request, Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         
-        InfluencerProfile influencerProfile = influencerProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Influencer profile not found"));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Campaign campaign = campaignRepository.findById(request.getCampaignId())
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + request.getCampaignId()));
 
-        if (campaign.getStatus() != CampaignStatus.OPEN) {
+        if (campaign.getStatus() != CampaignStatus.ACTIVE) {
             throw new UnauthorizedException("Campaign is not open for bidding");
         }
 
-        if (bidRepository.findByCampaignIdAndInfluencerProfileId(request.getCampaignId(), influencerProfile.getId()).isPresent()) {
+        if (bidRepository.findByCampaignIdAndInfluencerId(request.getCampaignId(), userId).isPresent()) {
             throw new DuplicateBidException("You have already bid on this campaign");
         }
 
         Bid bid = Bid.builder()
                 .campaign(campaign)
-                .influencerProfile(influencerProfile)
-                .proposal(request.getProposal())
-                .proposedAmount(request.getProposedAmount())
+                .influencer(user)
+                .message(request.getMessage())
+                .proposedBudget(request.getProposedBudget())
                 .status(BidStatus.PENDING)
                 .build();
 
@@ -57,7 +57,7 @@ public class BidService {
 
         notificationService.notifyBidReceived(
                 campaign.getBrandProfile().getUser().getId(),
-                influencerProfile.getUser().getFullName(),
+                user.getFullName(),
                 campaign.getTitle()
         );
 
@@ -81,11 +81,8 @@ public class BidService {
 
     public List<BidResponse> getMyBids(Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
-        
-        InfluencerProfile influencerProfile = influencerProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Influencer profile not found"));
 
-        return bidRepository.findByInfluencerProfileId(influencerProfile.getId()).stream()
+        return bidRepository.findByInfluencerId(userId).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
@@ -109,19 +106,19 @@ public class BidService {
         bid = bidRepository.save(bid);
 
         Campaign campaign = bid.getCampaign();
-        campaign.setStatus(CampaignStatus.IN_PROGRESS);
+        campaign.setStatus(CampaignStatus.ACTIVE);
         campaignRepository.save(campaign);
 
         CampaignAssignment assignment = CampaignAssignment.builder()
                 .bid(bid)
                 .campaign(campaign)
-                .influencerProfile(bid.getInfluencerProfile())
+                .influencerProfile(null) // TODO: Update when influencer profile relationship is clarified
                 .status(AssignmentStatus.ASSIGNED)
                 .build();
         campaignAssignmentRepository.save(assignment);
 
         notificationService.notifyBidAccepted(
-                bid.getInfluencerProfile().getUser().getId(),
+                bid.getInfluencer().getId(),
                 campaign.getTitle()
         );
 
@@ -143,21 +140,75 @@ public class BidService {
         bid = bidRepository.save(bid);
 
         notificationService.notifyBidRejected(
-                bid.getInfluencerProfile().getUser().getId(),
+                bid.getInfluencer().getId(),
                 bid.getCampaign().getTitle()
         );
 
         return mapToResponse(bid);
     }
 
+    public BidResponse getBidById(Long bidId, Authentication authentication) {
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
+        
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bid not found with id: " + bidId));
+
+        if (!bid.getInfluencer().getId().equals(userId) && 
+            !bid.getCampaign().getBrandProfile().getUser().getId().equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to view this bid");
+        }
+
+        return mapToResponse(bid);
+    }
+
+    @Transactional
+    public BidResponse updateBid(Long bidId, BidRequest request, Authentication authentication) {
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
+        
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bid not found with id: " + bidId));
+
+        if (!bid.getInfluencer().getId().equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to update this bid");
+        }
+
+        if (bid.getStatus() != BidStatus.PENDING) {
+            throw new UnauthorizedException("Only pending bids can be updated");
+        }
+
+        bid.setMessage(request.getMessage());
+        bid.setProposedBudget(request.getProposedBudget());
+        bid = bidRepository.save(bid);
+
+        return mapToResponse(bid);
+    }
+
+    @Transactional
+    public void deleteBid(Long bidId, Authentication authentication) {
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
+        
+        Bid bid = bidRepository.findById(bidId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bid not found with id: " + bidId));
+
+        if (!bid.getInfluencer().getId().equals(userId)) {
+            throw new UnauthorizedException("You are not authorized to delete this bid");
+        }
+
+        if (bid.getStatus() != BidStatus.PENDING) {
+            throw new UnauthorizedException("Only pending bids can be deleted");
+        }
+
+        bidRepository.delete(bid);
+    }
+
     private BidResponse mapToResponse(Bid bid) {
         InfluencerSummaryDto influencer = InfluencerSummaryDto.builder()
-                .id(bid.getInfluencerProfile().getId())
-                .fullName(bid.getInfluencerProfile().getUser().getFullName())
-                .niche(bid.getInfluencerProfile().getNiche())
-                .followerCount(bid.getInfluencerProfile().getFollowerCount())
-                .engagementRate(bid.getInfluencerProfile().getEngagementRate())
-                .profilePicUrl(bid.getInfluencerProfile().getProfilePicUrl())
+                .id(bid.getInfluencer().getId())
+                .fullName(bid.getInfluencer().getFullName())
+                .niche(null) // TODO: Get from influencer profile
+                .followerCount(null) // TODO: Get from influencer profile
+                .engagementRate(null) // TODO: Get from influencer profile
+                .profilePicUrl(null) // TODO: Get from influencer profile
                 .build();
 
         CampaignSummaryDto campaign = CampaignSummaryDto.builder()
@@ -169,10 +220,10 @@ public class BidService {
 
         return BidResponse.builder()
                 .id(bid.getId())
-                .proposal(bid.getProposal())
-                .proposedAmount(bid.getProposedAmount())
+                .message(bid.getMessage())
+                .proposedBudget(bid.getProposedBudget())
                 .status(bid.getStatus())
-                .submittedAt(bid.getSubmittedAt())
+                .createdAt(bid.getCreatedAt())
                 .influencer(influencer)
                 .campaign(campaign)
                 .build();

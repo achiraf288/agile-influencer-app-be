@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,8 +19,8 @@ public class CampaignResponse {
     private String description;
     private String category;
     private String location;
-    private BigDecimal budget;
-    private LocalDateTime deadline;
+    private Double budget;
+    private LocalDate deadline;
     private CampaignStatus status;
     private LocalDateTime createdAt;
     private Long brandProfileId;
