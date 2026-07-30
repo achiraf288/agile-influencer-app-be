@@ -8,6 +8,6 @@ import java.util.Optional;
 
 public interface BidRepository extends JpaRepository<Bid, Long> {
     List<Bid> findByCampaignId(Long campaignId);
-    List<Bid> findByInfluencerProfileId(Long influencerProfileId);
-    Optional<Bid> findByCampaignIdAndInfluencerProfileId(Long campaignId, Long influencerProfileId);
+    List<Bid> findByInfluencerId(Long influencerId);
+    Optional<Bid> findByCampaignIdAndInfluencerId(Long campaignId, Long influencerId);
 }

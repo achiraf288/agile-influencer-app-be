@@ -8,8 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -28,7 +27,7 @@ public class CampaignRequest {
     private String location;
     
     @NotNull(message = "Budget is required")
-    private BigDecimal budget;
+    private Double budget;
     
-    private LocalDateTime deadline;
+    private LocalDate deadline;
 }

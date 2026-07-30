@@ -8,13 +8,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bids", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"campaign_id", "influencer_profile_id"})
+    @UniqueConstraint(columnNames = {"campaign_id", "influencer_id"})
 })
 @Data
 @Builder
@@ -32,15 +32,15 @@ public class Bid {
     private Campaign campaign;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "influencer_profile_id", nullable = false)
+    @JoinColumn(name = "influencer_id", nullable = false)
     @JsonIgnore
-    private InfluencerProfile influencerProfile;
+    private User influencer;
     
-    @Column(columnDefinition = "TEXT", nullable = false)
-    private String proposal;
+    @Column(columnDefinition = "TEXT")
+    private String message;
     
     @Column(nullable = false)
-    private BigDecimal proposedAmount;
+    private Double proposedBudget;
     
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -49,5 +49,9 @@ public class Bid {
     
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDateTime submittedAt;
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(nullable = false)
+    private LocalDateTime updatedAt;
 }
