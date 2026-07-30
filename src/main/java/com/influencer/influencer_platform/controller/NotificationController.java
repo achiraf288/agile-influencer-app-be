@@ -1,5 +1,4 @@
 package com.influencer.influencer_platform.controller;
-
 import com.influencer.influencer_platform.dto.response.NotificationResponse;
 import com.influencer.influencer_platform.entity.Notification;
 import com.influencer.influencer_platform.repository.NotificationRepository;

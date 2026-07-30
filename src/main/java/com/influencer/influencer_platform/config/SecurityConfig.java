@@ -1,5 +1,6 @@
 package com.influencer.influencer_platform.config;
 
+
 import com.influencer.influencer_platform.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -37,7 +38,16 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/logout", "/api/campaigns").permitAll()
+                .requestMatchers(
+                    "/api/auth/register",
+                    "/api/auth/login",
+                    "/api/auth/logout",
+                    "/api/auth/register/influencer/step1",
+                    "/api/auth/register/influencer/step3",
+                    "/api/auth/register/brand/step2",
+                    "/api/campaigns",
+                    "/uploads/**"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authProvider)

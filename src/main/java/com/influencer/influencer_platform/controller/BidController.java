@@ -1,5 +1,4 @@
 package com.influencer.influencer_platform.controller;
-
 import com.influencer.influencer_platform.dto.request.BidRequest;
 import com.influencer.influencer_platform.dto.response.BidResponse;
 import com.influencer.influencer_platform.service.BidService;

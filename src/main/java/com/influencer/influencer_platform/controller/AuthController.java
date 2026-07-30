@@ -1,9 +1,11 @@
 package com.influencer.influencer_platform.controller;
-
 import com.influencer.influencer_platform.dto.request.LoginRequest;
 import com.influencer.influencer_platform.dto.request.RegisterRequest;
 import com.influencer.influencer_platform.dto.response.AuthResponse;
+import com.influencer.influencer_platform.dto.response.BrandProfileDto;
+import com.influencer.influencer_platform.dto.response.InfluencerProfileDto;
 import com.influencer.influencer_platform.dto.response.ProfileResponse;
+import com.influencer.influencer_platform.dto.request.RegisterInfluencerStep3Request;
 import com.influencer.influencer_platform.service.AuthService;
 import com.influencer.influencer_platform.service.ProfileService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -85,5 +88,35 @@ public class AuthController {
     public ResponseEntity<ProfileResponse> getMe(Authentication authentication) {
         ProfileResponse response = profileService.getMyProfile(authentication);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping(value = "/register/influencer/step1", consumes = {"multipart/form-data"})
+    public ResponseEntity<InfluencerProfileDto> registerInfluencerStep1(
+            @RequestParam String username,
+            @RequestParam String niche,
+            @RequestParam(required = false) String bio,
+            @RequestPart(required = false, name = "profile_pic") MultipartFile profilePic,
+            @RequestParam(required = false) Long userId,
+            Authentication authentication) {
+        return ResponseEntity.ok(profileService.completeInfluencerStep1(username, niche, bio, profilePic, userId, authentication));
+    }
+
+    @PostMapping(value = "/register/influencer/step3", consumes = {"application/json"})
+    public ResponseEntity<InfluencerProfileDto> registerInfluencerStep3(
+            @Valid @RequestBody RegisterInfluencerStep3Request request,
+            Authentication authentication) {
+        return ResponseEntity.ok(profileService.completeInfluencerStep3(request, authentication));
+    }
+
+    @PostMapping(value = "/register/brand/step2", consumes = {"multipart/form-data"})
+    public ResponseEntity<BrandProfileDto> registerBrandStep2(
+            @RequestParam String company_name,
+            @RequestParam(required = false) String industry,
+            @RequestParam(required = false) String website,
+            @RequestParam(required = false) String bio,
+            @RequestPart(required = false, name = "logo") MultipartFile logo,
+            @RequestParam(required = false) Long userId,
+            Authentication authentication) {
+        return ResponseEntity.ok(profileService.completeBrandStep2(company_name, industry, website, bio, logo, userId, authentication));
     }
 }
