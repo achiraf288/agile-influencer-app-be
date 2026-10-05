@@ -47,6 +47,7 @@ public class CampaignService {
         return mapToResponse(campaign, brandProfile);
     }
 
+    @Transactional(readOnly = true)
     public List<CampaignResponse> getOpenCampaigns(String category, String location) {
         Specification<Campaign> spec = (root, query, cb) -> cb.equal(root.get("status"), CampaignStatus.ACTIVE);
         
@@ -63,6 +64,7 @@ public class CampaignService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<CampaignResponse> getMyCampaigns(Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         
@@ -74,6 +76,7 @@ public class CampaignService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public CampaignResponse getCampaignById(Long id) {
         Campaign campaign = campaignRepository.findByIdWithBrandProfile(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Campaign not found with id: " + id));

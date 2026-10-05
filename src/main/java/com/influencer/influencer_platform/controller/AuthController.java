@@ -29,7 +29,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request, HttpServletRequest servletRequest, HttpServletResponse response) {
         AuthResponse authResponse = authService.register(request);
 
-        boolean isSecure = servletRequest.isSecure() || "https".equalsIgnoreCase(servletRequest.getScheme());
+        boolean isSecure = isSecureRequest(servletRequest);
 
         // Build cookie attributes conditionally (Secure and SameSite) to support local http dev
         String sameSite = isSecure ? "None" : "Lax";
@@ -54,7 +54,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest servletRequest, HttpServletResponse response) {
         AuthResponse authResponse = authService.login(request);
 
-        boolean isSecure = servletRequest.isSecure() || "https".equalsIgnoreCase(servletRequest.getScheme());
+        boolean isSecure = isSecureRequest(servletRequest);
 
         String sameSite = isSecure ? "None" : "Lax";
         String secureFlag = isSecure ? "; Secure" : "";
@@ -76,12 +76,23 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletRequest servletRequest, HttpServletResponse response) {
-        boolean isSecure = servletRequest.isSecure() || "https".equalsIgnoreCase(servletRequest.getScheme());
+        boolean isSecure = isSecureRequest(servletRequest);
         String sameSite = isSecure ? "None" : "Lax";
         String secureFlag = isSecure ? "; Secure" : "";
 
         response.addHeader("Set-Cookie", String.format("jwt=; HttpOnly; SameSite=%s; Path=/; Max-Age=0%s", sameSite, secureFlag));
         return ResponseEntity.ok().build();
+    }
+
+    private boolean isSecureRequest(HttpServletRequest request) {
+        String forwardedProto = request.getHeader("X-Forwarded-Proto");
+        if (forwardedProto != null) {
+            forwardedProto = forwardedProto.split(",", 2)[0].trim();
+        }
+
+        return request.isSecure()
+                || "https".equalsIgnoreCase(request.getScheme())
+                || "https".equalsIgnoreCase(forwardedProto);
     }
 
     @GetMapping("/me")

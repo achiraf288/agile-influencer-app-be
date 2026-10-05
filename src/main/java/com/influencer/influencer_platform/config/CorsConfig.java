@@ -13,15 +13,17 @@ import java.util.List;
 @Configuration
 public class CorsConfig {
 
-    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    @Value("${app.cors.allowed-origins:https://agile-influencerhub.achiraf28.workers.dev/}")
     private String allowedOriginsProp;
 
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
+
         config.setAllowCredentials(true);
         // Read allowed origins from property (comma-separated)
         List<String> origins = Arrays.asList(allowedOriginsProp.split(","));
+
         config.setAllowedOrigins(origins);
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"));

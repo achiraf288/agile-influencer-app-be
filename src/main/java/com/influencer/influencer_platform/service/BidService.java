@@ -64,6 +64,7 @@ public class BidService {
         return mapToResponse(bid);
     }
 
+    @Transactional(readOnly = true)
     public List<BidResponse> getBidsByCampaign(Long campaignId, Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         
@@ -79,6 +80,7 @@ public class BidService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<BidResponse> getMyBids(Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
 
@@ -147,6 +149,7 @@ public class BidService {
         return mapToResponse(bid);
     }
 
+    @Transactional(readOnly = true)
     public BidResponse getBidById(Long bidId, Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         

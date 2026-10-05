@@ -31,6 +31,7 @@ public class ProfileService {
     private final SocialMediaLinkRepository socialMediaLinkRepository;
     private final FileStorageService fileStorageService;
 
+    @Transactional(readOnly = true)
     public ProfileResponse getMyProfile(Authentication authentication) {
         Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         
@@ -40,6 +41,7 @@ public class ProfileService {
         return mapToProfileResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public BrandProfileDto getBrandProfile(Long userId, Authentication authentication) {
         User currentUser = userRepository.findById(
                 ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId()
@@ -58,6 +60,7 @@ public class ProfileService {
         return mapToBrandProfileDto(brandProfile);
     }
 
+    @Transactional(readOnly = true)
     public InfluencerProfileDto getInfluencerProfile(Long userId, Authentication authentication) {
         User currentUser = userRepository.findById(
                 ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId()

@@ -32,8 +32,7 @@ public class InfluencerController {
     @GetMapping("/profile")
     @PreAuthorize("hasRole('INFLUENCER')")
     public ResponseEntity<InfluencerProfileDto> getInfluencerProfile(Authentication authentication) {
-        // Get current user's ID from authentication
-        Long userId = Long.parseLong(authentication.getName());
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
         InfluencerProfileDto response = profileService.getInfluencerProfile(userId, authentication);
         return ResponseEntity.ok(response);
     }
