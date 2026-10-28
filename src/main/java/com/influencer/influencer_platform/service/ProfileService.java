@@ -53,6 +53,13 @@ public class ProfileService {
         return mapToBrandProfileDto(brandProfile);
     }
 
+    public BrandProfileDto getMyBrandProfile(Authentication authentication) {
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
+        BrandProfile brandProfile = brandProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand profile not found"));
+        return mapToBrandProfileDto(brandProfile);
+    }
+
     public InfluencerProfileDto getInfluencerProfile(Long userId, Authentication authentication) {
         User currentUser = userRepository.findById(
                 ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId()
@@ -68,6 +75,13 @@ public class ProfileService {
             throw new UnauthorizedException("You are not authorized to view this profile");
         }
 
+        return mapToInfluencerProfileDto(influencerProfile);
+    }
+
+    public InfluencerProfileDto getMyInfluencerProfile(Authentication authentication) {
+        Long userId = ((com.influencer.influencer_platform.security.UserPrincipal) authentication.getPrincipal()).getId();
+        InfluencerProfile influencerProfile = influencerProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Influencer profile not found"));
         return mapToInfluencerProfileDto(influencerProfile);
     }
 
@@ -179,7 +193,9 @@ public class ProfileService {
     }
 
     private InfluencerProfileDto mapToInfluencerProfileDto(InfluencerProfile profile) {
-        List<SocialMediaLinkDto> links = profile.getSocialMediaLinks().stream()
+        List<SocialMediaLinkDto> links = (profile.getSocialMediaLinks() == null
+                ? List.<SocialMediaLink>of()
+                : profile.getSocialMediaLinks()).stream()
                 .map(this::mapToSocialMediaLinkDto)
                 .collect(Collectors.toList());
 
